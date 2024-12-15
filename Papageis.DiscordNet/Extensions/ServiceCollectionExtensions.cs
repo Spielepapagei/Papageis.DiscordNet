@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
         
         // Main service
         collection.AddSingleton<DiscordBotService>();
+        collection.AddSingleton<SlashCommandManagerService>();
 
         //
         collection.AddInterfaces(interfaceConfiguration =>

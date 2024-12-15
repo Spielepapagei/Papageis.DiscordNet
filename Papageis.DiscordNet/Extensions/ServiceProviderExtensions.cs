@@ -18,7 +18,7 @@ public static class ServiceProviderExtensions
     public static async Task RegisterGlobalCommands(this IServiceProvider provider, bool runAsync = false)
     {
         var discordBotService = provider.GetRequiredService<DiscordBotService>();
-
+        
         if (runAsync)
             Task.Run(discordBotService.RegisterGlobalCommandsAsync);
         else

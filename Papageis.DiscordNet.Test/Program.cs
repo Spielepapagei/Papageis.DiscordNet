@@ -6,8 +6,10 @@ using MoonCore.Extensions;
 using MoonCore.Helpers;
 using MoonCore.Services;
 using Papageis.DiscordNet.Extensions;
+using Papageis.DiscordNet.Services;
 using Papapageis.DiscordNet.Test;
 using Papapageis.DiscordNet.Test.Configuration;
+using Papapageis.DiscordNet.Test.Modules;
 
 Directory.CreateDirectory(PathBuilder.Dir("storage"));
 var configService = new ConfigService<AppConfiguration>(PathBuilder.File("storage", "config.json"));
@@ -25,7 +27,6 @@ startupLoggerFactory.AddProviders(providers);
 
 var serviceCollection = new ServiceCollection();
 
-serviceCollection.AddSingleton<CoolSharedService>();
 serviceCollection.AddSingleton(configService.Get());
 
 serviceCollection.AddDiscordBot(configuration =>
@@ -45,6 +46,8 @@ serviceCollection.AddLogging(builder =>
     builder.AddProviders(providers);
 });
 
+//Bot Testy
+serviceCollection.AddSingleton<MyCoolCommand>();
 var serviceProvider = serviceCollection.BuildServiceProvider();
 
 serviceProvider.StartDiscordBot(true);
