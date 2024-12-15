@@ -5,7 +5,7 @@ name: Build .NET
 
 on:
   push:
-    branches: [ "development" ]
+    branches: [ "development","stable" ]
   pull_request:
     branches: [ "development","stable" ]
 
