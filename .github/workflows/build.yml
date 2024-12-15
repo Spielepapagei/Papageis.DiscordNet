@@ -32,5 +32,5 @@ jobs:
         run: dotnet pack -c Release --no-build --output .
         
       - name: Push to Github
-        run: dotnet nuget push "*.nupkg" --api-key ${{secrets.GH_PACKAGES_READWRITE}} --source https://nuget.pkg.github.com/Spielepapagei/index.json
+        run: dotnet nuget push "*.nupkg" --skip-duplicate --api-key ${{secrets.GH_PACKAGES_READWRITE}} --source https://nuget.pkg.github.com/Spielepapagei/index.json
         
