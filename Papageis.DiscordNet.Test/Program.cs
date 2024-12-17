@@ -31,9 +31,11 @@ serviceCollection.AddSingleton(configService.Get());
 serviceCollection.AddDiscordBot(configuration =>
 {
     configuration.ModuleAssemblies.Add(Assembly.GetEntryAssembly()!);
-    configuration.Auth = configService.Get().DiscordBotConfiguration.Auth;
-    configuration.Settings = configService.Get().DiscordBotConfiguration.Settings;
-    configuration.Settings.DevelopMode = false;
+    configuration.Auth.BotToken = configService.Get().BotToken;
+    configuration.Settings.DevelopMode = true;
+    configuration.Settings.EnableDebug = configService.Get().Settings.EnableDebug;
+    configuration.Settings.Enable = configService.Get().Settings.Enable;
+
 },
 config =>
 {

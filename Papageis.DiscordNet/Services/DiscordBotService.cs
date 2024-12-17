@@ -32,6 +32,11 @@ public class DiscordBotService
 
     public async Task StartAsync()
     {
+        if (!Configuration.Settings.Enable)
+        {
+            Logger.LogInformation("Bot has been Disabled Skipping Startup.");
+        }
+        
         Logger.LogInformation("Initializing DiscordBot");
         Client.Log += Log;
         Client.Ready += OnReady;
