@@ -1,4 +1,5 @@
 using Discord;
+using Discord.WebSocket;
 
 namespace Papageis.DiscordNet.Module;
 
@@ -22,5 +23,5 @@ public interface IBaseUserCommand
     /// <summary>
     /// Here you Implement the logic for this UserCommand
     /// </summary>
-    public Task CommandExecuted(UserCommandBuilder command);
+    public Task CommandExecuted(SocketUserCommand command);
 }
