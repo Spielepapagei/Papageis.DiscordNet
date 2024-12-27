@@ -14,20 +14,22 @@ public class DiscordBotService
     private readonly IBaseBotModule[] Modules;
     private readonly IBaseSlashCommand[] Commands;
     private readonly DiscordBotConfiguration Configuration;
+    private readonly SlashCommandManagerService SlashCommandManager;
 
     public DiscordBotService(
         ILogger<DiscordBotService> logger,
         DiscordBotConfiguration configuration,
         IBaseBotModule[] modules,
         IBaseSlashCommand[] commands,
-        DiscordSocketClient client
-    )
+        DiscordSocketClient client,
+        SlashCommandManagerService slashCommandManager)
     {
         Logger = logger;
         Modules = modules;
         Client = client;
         Commands = commands;
         Configuration = configuration;
+        SlashCommandManager = slashCommandManager;
     }
 
     public async Task StartAsync()
@@ -40,6 +42,7 @@ public class DiscordBotService
         Logger.LogInformation("Initializing DiscordBot");
         Client.Log += Log;
         Client.Ready += OnReady;
+        Client.SlashCommandExecuted += SlashCommandManager.OnSlashCommandExecuted;
 
         try
         {
@@ -68,6 +71,8 @@ public class DiscordBotService
 
         Logger.LogInformation("Login as {username}#{id}", Client.CurrentUser.Username,
             Client.CurrentUser.DiscriminatorValue);
+        
+        RegisterGlobalCommandsAsync();
     }
 
     public IBaseBotModule[] GetBaseBotModules()
@@ -86,6 +91,7 @@ public class DiscordBotService
         {
             foreach (var command in Commands)
             {
+                command.GetName();
                 await RegisterSlashCommandAsync(command);
                 await Task.Delay(TimeSpan.FromMilliseconds(100));
             }

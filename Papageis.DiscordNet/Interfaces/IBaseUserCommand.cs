@@ -1,9 +1,8 @@
-﻿using Discord;
-using Discord.WebSocket;
+using Discord;
 
 namespace Papageis.DiscordNet.Module;
 
-public interface IBaseSlashCommand
+public interface IBaseUserCommand
 {
     public async Task GetName()
     {
@@ -16,12 +15,12 @@ public interface IBaseSlashCommand
     public string Name { get; set; }
     
     /// <summary>
-    /// This is an async implementation to Registering SlashCommands
+    /// This is an async implementation to Registering UserCommands
     /// </summary>
-    public Task<SlashCommandBuilder> RegisterAsync();
+    public Task<UserCommandBuilder> RegisterAsync();
     
     /// <summary>
-    /// Here you Implement the logic for this SlashCommand
+    /// Here you Implement the logic for this UserCommand
     /// </summary>
-    public Task CommandExecuted(SocketSlashCommand command);
+    public Task CommandExecuted(UserCommandBuilder command);
 }
