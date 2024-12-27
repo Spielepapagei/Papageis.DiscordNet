@@ -43,6 +43,8 @@ public class DiscordBotService
         Client.Log += Log;
         Client.Ready += OnReady;
         Client.SlashCommandExecuted += SlashCommandManager.OnSlashCommandExecuted;
+        Client.MessageCommandExecuted += SlashCommandManager.OnMessageCommandExecuted;
+        Client.UserCommandExecuted += SlashCommandManager.OnuserCommandExecuted;
 
         try
         {

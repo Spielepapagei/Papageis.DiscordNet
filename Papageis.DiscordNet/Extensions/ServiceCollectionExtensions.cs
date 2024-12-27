@@ -39,6 +39,8 @@ public static class ServiceCollectionExtensions
             interfaceConfiguration.AddAssemblies(configuration.ModuleAssemblies);
             interfaceConfiguration.AddInterface<IBaseBotModule>();
             interfaceConfiguration.AddInterface<IBaseSlashCommand>();
+            interfaceConfiguration.AddInterface<IBaseMessageCommand>();
+            interfaceConfiguration.AddInterface<IBaseUserCommand>();
             interfaceConfiguration.AddInterface<IGuildSlashCommand>();
         });
     }
