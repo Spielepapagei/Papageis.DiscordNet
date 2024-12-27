@@ -10,25 +10,31 @@ namespace Papageis.DiscordNet.Services;
 public class DiscordBotService
 {
     private readonly ILogger<DiscordBotService> Logger;
+    private readonly DiscordBotConfiguration Configuration;
     private readonly DiscordSocketClient Client;
     private readonly IBaseBotModule[] Modules;
-    private readonly IBaseSlashCommand[] Commands;
-    private readonly DiscordBotConfiguration Configuration;
+    private readonly IBaseSlashCommand[] SlashCommands;
+    private readonly IBaseMessageCommand[] MessageCommands;
+    private readonly IBaseUserCommand[] UserCommands;
     private readonly SlashCommandManagerService SlashCommandManager;
 
     public DiscordBotService(
         ILogger<DiscordBotService> logger,
         DiscordBotConfiguration configuration,
         IBaseBotModule[] modules,
-        IBaseSlashCommand[] commands,
+        IBaseSlashCommand[] slashCommands,
+        IBaseMessageCommand[] messageCommands,
+        IBaseUserCommand[] userCommands,
         DiscordSocketClient client,
         SlashCommandManagerService slashCommandManager)
     {
         Logger = logger;
+        Configuration = configuration;
         Modules = modules;
         Client = client;
-        Commands = commands;
-        Configuration = configuration;
+        SlashCommands = slashCommands;
+        MessageCommands = messageCommands;
+        UserCommands = userCommands;
         SlashCommandManager = slashCommandManager;
     }
 
@@ -86,10 +92,24 @@ public class DiscordBotService
     {
         try
         {
-            foreach (var command in Commands)
+            foreach (var command in SlashCommands)
             {
                 command.GetName();
                 await RegisterSlashCommandAsync(command);
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
+            }
+            
+            foreach (var command in MessageCommands)
+            {
+                command.GetName();
+                await RegisterMessageCommandAsync(command);
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
+            }
+            
+            foreach (var command in UserCommands)
+            {
+                command.GetName();
+                await RegisterUserCommandAsync(command);
                 await Task.Delay(TimeSpan.FromMilliseconds(100));
             }
         }
@@ -100,6 +120,20 @@ public class DiscordBotService
     }
     
     public async Task RegisterSlashCommandAsync(IBaseSlashCommand command)
+    {
+        var builder = await command.RegisterAsync();
+
+        await Client.CreateGlobalApplicationCommandAsync(builder.Build());
+    }
+    
+    public async Task RegisterMessageCommandAsync(IBaseMessageCommand command)
+    {
+        var builder = await command.RegisterAsync();
+
+        await Client.CreateGlobalApplicationCommandAsync(builder.Build());
+    }
+    
+    public async Task RegisterUserCommandAsync(IBaseUserCommand command)
     {
         var builder = await command.RegisterAsync();
 
