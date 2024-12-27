@@ -7,19 +7,18 @@ namespace Papageis.DiscordNet.Services;
 
 public class SlashCommandManagerService
 {
-    private readonly ILogger<SlashCommandManagerService> Logger;
-    private readonly DiscordSocketClient Client;
     private readonly IBaseSlashCommand[] SlashCommandInterfaces;
     private readonly IBaseMessageCommand[] MessageCommandInterfaces;
     private readonly IBaseUserCommand[] UserCommandInterfaces;
 
-    public SlashCommandManagerService(IBaseSlashCommand[] slashCommandInterfaces, DiscordSocketClient client, ILogger<SlashCommandManagerService> logger)
+    public SlashCommandManagerService(IBaseSlashCommand[] slashCommandInterfaces, IBaseMessageCommand[] messageCommandInterfaces, IBaseUserCommand[] userCommandInterfaces)
     {
-        Client = client;
-        Logger = logger;
         SlashCommandInterfaces = slashCommandInterfaces;
+        MessageCommandInterfaces = messageCommandInterfaces;
+        UserCommandInterfaces = userCommandInterfaces;
     }
-    
+
+
     public async Task OnSlashCommandExecuted(SocketSlashCommand command)
     {
         var commandName = command.CommandName;
