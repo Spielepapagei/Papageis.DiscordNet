@@ -2,7 +2,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using Papageis.DiscordNet.Module;
 
-namespace Papapageis.DiscordNet.Test.Modules;
+namespace Papageis.DiscordNet.Test.Modules;
 
 public class MyCoolModule : IBaseBotModule
 {

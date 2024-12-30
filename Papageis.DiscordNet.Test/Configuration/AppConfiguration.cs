@@ -1,6 +1,6 @@
 using Papageis.DiscordNet.Configuration;
 
-namespace Papapageis.DiscordNet.Test.Configuration;
+namespace Papageis.DiscordNet.Test.Configuration;
 
 public class AppConfiguration
 {

@@ -13,54 +13,32 @@ public class DiscordBotService
     private readonly DiscordBotConfiguration Configuration;
     private readonly DiscordSocketClient Client;
     private readonly IBaseBotModule[] Modules;
-    private readonly IBaseSlashCommand[] SlashCommands;
-    private readonly IBaseMessageCommand[] MessageCommands;
-    private readonly IBaseUserCommand[] UserCommands;
-    private readonly SlashCommandManagerService SlashCommandManager;
 
     public DiscordBotService(
         ILogger<DiscordBotService> logger,
         DiscordBotConfiguration configuration,
         IBaseBotModule[] modules,
-        IBaseSlashCommand[] slashCommands,
-        IBaseMessageCommand[] messageCommands,
-        IBaseUserCommand[] userCommands,
-        DiscordSocketClient client,
-        SlashCommandManagerService slashCommandManager)
+        DiscordSocketClient client)
     {
         Logger = logger;
         Configuration = configuration;
         Modules = modules;
         Client = client;
-        SlashCommands = slashCommands;
-        MessageCommands = messageCommands;
-        UserCommands = userCommands;
-        SlashCommandManager = slashCommandManager;
     }
 
     public async Task StartAsync()
     {
         if (!Configuration.Settings.Enable)
         {
-            Logger.LogInformation("Bot has been Disabled Skipping Startup.");
+            Logger.LogInformation("DiscordBot has been Disabled Skipping Startup.");
         }
         
         Logger.LogInformation("Initializing DiscordBot");
         Client.Log += Log;
         Client.Ready += OnReady;
-        Client.SlashCommandExecuted += SlashCommandManager.OnSlashCommandExecuted;
-        Client.MessageCommandExecuted += SlashCommandManager.OnMessageCommandExecuted;
-        Client.UserCommandExecuted += SlashCommandManager.OnuserCommandExecuted;
 
-        try
-        {
-            foreach (var module in Modules)
-                await module.InitializeAsync();
-        }
-        catch (Exception e)
-        {
-            Logger.LogError("An error occurred during Module initialization: {RegisterException}", e);
-        }
+        foreach (var module in Modules)
+            await InitializeAsync(module);
         
         await Client.LoginAsync(TokenType.Bot, Configuration.Auth.BotToken);
         await Client.StartAsync();
@@ -70,9 +48,6 @@ public class DiscordBotService
 
     private async Task OnReady()
     {
-        await Client.SetStatusAsync(UserStatus.Online);
-        await Client.SetGameAsync("the Universe", "https://spielepapagei.de", ActivityType.Listening);
-
         if (Configuration.Settings.DevelopMode)
             Logger.LogInformation("Invite link: {invite}",
                 $"https://discord.com/api/oauth2/authorize?client_id={Client.CurrentUser.Id}&permissions=1099511696391&scope=bot%20applications.commands");
@@ -80,7 +55,14 @@ public class DiscordBotService
         Logger.LogInformation("Login as {username}#{id}", Client.CurrentUser.Username,
             Client.CurrentUser.DiscriminatorValue);
         
-        RegisterGlobalCommandsAsync();
+        /*
+        var builder = new SlashCommandBuilder()
+            .WithName("ping")
+            .WithDescription("Ping Command");
+        //Client.CreateGlobalApplicationCommandAsync(builder.Build());
+        Client.GetGuild(1076531815998828635).CreateApplicationCommandAsync(builder.Build());
+        */
+        
     }
 
     public IBaseBotModule[] GetBaseBotModules()
@@ -88,70 +70,22 @@ public class DiscordBotService
         return Modules;
     }
 
-    public async Task UnregisterAsync(IBaseBotModule module)
-    {
-        await module.UnregisterAsync();
-    }
-    
-    public async Task RegisterGlobalCommandsAsync()
+    public async Task InitializeAsync(IBaseBotModule module)
     {
         try
         {
-            foreach (var command in SlashCommands)
-            {
-                command.GetName();
-                await RegisterSlashCommandAsync(command);
-                await Task.Delay(TimeSpan.FromMilliseconds(100));
-            }
-            
-            foreach (var command in MessageCommands)
-            {
-                command.GetName();
-                await RegisterMessageCommandAsync(command);
-                await Task.Delay(TimeSpan.FromMilliseconds(100));
-            }
-            
-            foreach (var command in UserCommands)
-            {
-                command.GetName();
-                await RegisterUserCommandAsync(command);
-                await Task.Delay(TimeSpan.FromMilliseconds(100));
-            }
+            await module.InitializeAsync();
         }
         catch (Exception e)
         {
-            Logger.LogError("An error occurred during Module Command Registration: {RegisterException}", e);
+            Logger.LogError("An error has occurred while initializing the BotModules: {Exception}", e);
+            throw;
         }
     }
     
-    public async Task RegisterSlashCommandAsync(IBaseSlashCommand command)
+    public async Task UnregisterAsync(IBaseBotModule module)
     {
-        var builder = await command.RegisterAsync();
-
-        await Client.CreateGlobalApplicationCommandAsync(builder.Build());
-    }
-    
-    public async Task RegisterMessageCommandAsync(IBaseMessageCommand command)
-    {
-        var builder = await command.RegisterAsync();
-
-        await Client.CreateGlobalApplicationCommandAsync(builder.Build());
-    }
-    
-    public async Task RegisterUserCommandAsync(IBaseUserCommand command)
-    {
-        var builder = await command.RegisterAsync();
-
-        await Client.CreateGlobalApplicationCommandAsync(builder.Build());
-    }
-    
-    public async Task RegisterSlashCommandAsync(IGuildSlashCommand command)
-    {
-        var builder = await command.RegisterAsync();
-        var guildId = await command.GuildId();
-
-        var guild = Client.GetGuild(guildId);
-        guild.CreateApplicationCommandAsync(builder.Build());
+        await module.UnregisterAsync();
     }
 
     private Task Log(LogMessage message)

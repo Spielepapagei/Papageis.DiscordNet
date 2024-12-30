@@ -1,3 +1,4 @@
+using System.Reflection;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +21,7 @@ public static class ServiceCollectionExtensions
         // Socket config
         var socketConfig = new DiscordSocketConfig()
         {
-            GatewayIntents = GatewayIntents.All
+            GatewayIntents = GatewayIntents.None
         };
         
         onConfigureSocket?.Invoke(socketConfig);
@@ -31,17 +32,14 @@ public static class ServiceCollectionExtensions
         
         // Main service
         collection.AddSingleton<DiscordBotService>();
-        collection.AddSingleton<SlashCommandManagerService>();
+        collection.AddSingleton<InteractionHandlerService>();
 
         //
         collection.AddInterfaces(interfaceConfiguration =>
         {
+            interfaceConfiguration.AddAssemblies([typeof(InteractionHandlerService).Assembly]);
             interfaceConfiguration.AddAssemblies(configuration.ModuleAssemblies);
             interfaceConfiguration.AddInterface<IBaseBotModule>();
-            interfaceConfiguration.AddInterface<IBaseSlashCommand>();
-            interfaceConfiguration.AddInterface<IBaseMessageCommand>();
-            interfaceConfiguration.AddInterface<IBaseUserCommand>();
-            interfaceConfiguration.AddInterface<IGuildSlashCommand>();
         });
     }
 }

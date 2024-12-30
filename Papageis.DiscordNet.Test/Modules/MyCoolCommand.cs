@@ -1,27 +1,37 @@
-using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
 using Papageis.DiscordNet.Attributes;
-using Papageis.DiscordNet.Module;
+using Papageis.DiscordNet.Attributes.SlashCommand;
+using Papageis.DiscordNet.Services;
 
-namespace Papapageis.DiscordNet.Test.Modules;
+namespace Papageis.DiscordNet.Test.Modules;
 
-public class MyCoolCommand : IBaseSlashCommand
+[InteractionType("ping", InteractionType.SlashCommand)]
+public class MyCoolCommand : InteractionContext<SocketSlashCommand>
 {
-    public string Name { get; set; }
+    private readonly ILogger<MyCoolCommand> Logger;
 
-    public async Task<SlashCommandBuilder> RegisterAsync()
+    public MyCoolCommand(ILogger<MyCoolCommand> logger)
     {
-        return new SlashCommandBuilder()
-            .WithName("testy")
-            .WithDescription("This is a TestCommand")
-            .AddOption("ping", ApplicationCommandOptionType.String, "type something here", false);
+        Logger = logger;
     }
-
-    [IsBot(true)]
-    [IsDmChannel(true)]
-    [HasPermission(GuildPermission.Administrator)]
-    public async Task CommandExecuted(SocketSlashCommand command)
+    
+    
+    [SubCommandGroup(typeof(MyCoolCommand), "get")]
+    public class MyCoolGroup : InteractionContext<SocketSlashCommand>
     {
-        await command.RespondAsync("pong");
+        
+        [SubCommand("ping")]
+        public async Task MyCoolSubCommand()
+        {
+            Context.RespondAsync("Success from MyCoolSubCommand");
+        }
+        
+    }
+    
+    [SubCommand( "sub-command")]
+    public async Task MySubCommand()
+    {
+        Context.RespondAsync("Success from MySubCommand");
     }
 }
