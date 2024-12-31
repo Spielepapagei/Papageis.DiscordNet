@@ -4,7 +4,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MoonCore.PluginFramework.Extensions;
 using Papageis.DiscordNet.Configuration;
-using Papageis.DiscordNet.Module;
+using Papageis.DiscordNet.Interfaces;
 using Papageis.DiscordNet.Services;
 
 namespace Papageis.DiscordNet.Extensions;

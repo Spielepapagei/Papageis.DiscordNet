@@ -7,9 +7,8 @@ using MoonCore.Helpers;
 using MoonCore.Services;
 using Papageis.DiscordNet.Extensions;
 using Papageis.DiscordNet.Services;
-using Papageis.DiscordNet.Test;
-using Papageis.DiscordNet.Test.Configuration;
-using Papageis.DiscordNet.Test.Modules;
+using Papapageis.DiscordNet.Test.Configuration;
+using Papapageis.DiscordNet.Test.Modules;
 
 Directory.CreateDirectory(PathBuilder.Dir("storage"));
 var configService = new ConfigService<AppConfiguration>(PathBuilder.File("storage", "config.json"));

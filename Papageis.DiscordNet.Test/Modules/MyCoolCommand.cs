@@ -1,12 +1,14 @@
+using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using Papageis.DiscordNet.Attributes;
 using Papageis.DiscordNet.Attributes.SlashCommand;
+using Papageis.DiscordNet.Enums;
 using Papageis.DiscordNet.Services;
 
-namespace Papageis.DiscordNet.Test.Modules;
+namespace Papapageis.DiscordNet.Test.Modules;
 
-[InteractionType("ping", InteractionType.SlashCommand)]
+[InteractionType(ValidInteractionType.SlashCommand, "user")]
 public class MyCoolCommand : InteractionContext<SocketSlashCommand>
 {
     private readonly ILogger<MyCoolCommand> Logger;
@@ -17,21 +19,23 @@ public class MyCoolCommand : InteractionContext<SocketSlashCommand>
     }
     
     
-    [SubCommandGroup(typeof(MyCoolCommand), "get")]
+    [SubCommandGroup(typeof(MyCoolCommand), "moderation")]
     public class MyCoolGroup : InteractionContext<SocketSlashCommand>
     {
         
-        [SubCommand("ping")]
-        public async Task MyCoolSubCommand()
+        [SubCommand("ban")]
+        [SlashCommandOption(ApplicationCommandOptionType.User, "user", "select the user to ban", true)]
+        public async Task MyCoolSubCommand([FromOptions]IUser user)
         {
-            Context.RespondAsync("Success from MyCoolSubCommand");
+            Context.RespondAsync($"Success from MySubCommand User: {user.Username}");
         }
         
     }
     
-    [SubCommand( "sub-command")]
-    public async Task MySubCommand()
+    [SubCommand( "info")]
+    [SlashCommandOption(ApplicationCommandOptionType.User, "user", "select the user to ban", true)]
+    public async Task MySubCommand([FromOptions]IUser user)
     {
-        Context.RespondAsync("Success from MySubCommand");
+        Context.RespondAsync($"Success from MySubCommand User: {user.Username}");
     }
 }

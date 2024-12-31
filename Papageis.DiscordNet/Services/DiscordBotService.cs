@@ -3,7 +3,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using Papageis.DiscordNet.Configuration;
 using Papageis.DiscordNet.Extensions;
-using Papageis.DiscordNet.Module;
+using Papageis.DiscordNet.Interfaces;
 
 namespace Papageis.DiscordNet.Services;
 

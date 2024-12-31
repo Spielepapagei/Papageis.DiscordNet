@@ -1,17 +1,34 @@
+using Discord;
+using Papageis.DiscordNet.Enums;
+
 namespace Papageis.DiscordNet.Attributes;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class InteractionTypeAttribute : Attribute
 {
-    private readonly string Name;
-    private InteractionType Type;
+    public readonly ValidInteractionType Type;
+    public readonly string Name;
+    public readonly string Description;
+    public readonly bool UseLocalizedNaming;
+    public readonly bool Nsfw;
+    public readonly GuildPermission GuildPermission;
+    public readonly ApplicationIntegrationType IntegrationTypes;
 
-    public InteractionTypeAttribute(string name, InteractionType interactionType)
+    public InteractionTypeAttribute(
+        ValidInteractionType type,
+        string name,
+        string description = null,
+        bool useLocalizedNaming = false,
+        bool nsfw = false,
+        GuildPermission guildPermission = default,
+        ApplicationIntegrationType integrationTypes = default)
     {
+        Type = type;
         Name = name;
-        Type = interactionType;
+        Description = description;
+        UseLocalizedNaming = useLocalizedNaming;
+        Nsfw = nsfw;
+        GuildPermission = guildPermission;
+        IntegrationTypes = integrationTypes;
     }
-
-    public string GetName() => Name;
-    public InteractionType GetInteractionType() => Type;
 }

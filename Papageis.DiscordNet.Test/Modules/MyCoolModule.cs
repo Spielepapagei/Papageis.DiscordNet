@@ -1,8 +1,8 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
-using Papageis.DiscordNet.Module;
+using Papageis.DiscordNet.Interfaces;
 
-namespace Papageis.DiscordNet.Test.Modules;
+namespace Papapageis.DiscordNet.Test.Modules;
 
 public class MyCoolModule : IBaseBotModule
 {

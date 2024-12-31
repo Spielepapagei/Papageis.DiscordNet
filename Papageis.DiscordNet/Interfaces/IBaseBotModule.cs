@@ -1,4 +1,4 @@
-namespace Papageis.DiscordNet.Module;
+namespace Papageis.DiscordNet.Interfaces;
 
 public interface IBaseBotModule
 {

@@ -5,8 +5,9 @@ using Microsoft.Extensions.Logging;
 using Papageis.DiscordNet.Attributes;
 using Papageis.DiscordNet.Attributes.SlashCommand;
 using Papageis.DiscordNet.Configuration;
+using Papageis.DiscordNet.Enums;
+using Papageis.DiscordNet.Interfaces;
 using Papageis.DiscordNet.Models;
-using Papageis.DiscordNet.Module;
 
 namespace Papageis.DiscordNet.Services;
 
@@ -60,13 +61,13 @@ public class InteractionHandlerService : IBaseBotModule
                     var interactionType = interaction.GetCustomAttribute(typeof(InteractionTypeAttribute), false) as InteractionTypeAttribute;
                     if(interactionType == null) continue;
                     
-                    switch (interactionType.GetInteractionType())
+                    switch (interactionType.Type)
                     {
                         #region InitSlashCommand
-                        case InteractionType.SlashCommand:
+                        case ValidInteractionType.SlashCommand:
                             var applicationCommandModel = new SlashCommandInfo
                             {
-                                Name = interactionType.GetName(),
+                                Name = interactionType.Name,
                                 InteractionClass = interaction
                             };
                             
@@ -77,10 +78,8 @@ public class InteractionHandlerService : IBaseBotModule
                             if (entryPoint != null)
                             {
                                 applicationCommandModel.MethodInfo = entryPoint;
+                                applicationCommandModel.Options = await GetOptionsFromMethod(entryPoint);
                                 
-                                Logger.LogInformation("Command here!");
-                                
-                                //TODO: Add option handling
                                 SlashCommands.Add(applicationCommandModel);
                                 break;
                             }
@@ -92,57 +91,26 @@ public class InteractionHandlerService : IBaseBotModule
 
                             foreach (var group in subCommandGroups)
                             {
-                                var groupAttribute = group.GetCustomAttribute<SubCommandGroupAttribute>();
-
-                                var subCommandsInGroup = group.GetMethods()
-                                    .Where(x => x.GetCustomAttribute<SubCommandAttribute>() != null);
-
-                                var subOptions = new List<SlashCommandInfo.SubCommandOptions>();
-                                foreach(var x in subCommandsInGroup)
-                                {
-                                    var attribute = x.GetCustomAttribute<SubCommandAttribute>();
-                                    
-                                    subOptions.Add(new()
-                                    {
-                                        MethodInfo = x,
-                                        Name = attribute.Name,
-                                        Description = attribute.Description,
-                                        Type = attribute.Type
-                                    });
-                                }
-                                
-                                applicationCommandModel.Options.Add(new()
-                                {
-                                    Name = groupAttribute.Name,
-                                    Description = groupAttribute.Description,
-                                    Type = groupAttribute.Type,
-                                    Options = subOptions
-                                });
+                                applicationCommandModel.Options.Add(await GetSlashCommandGroupInfoFromMethod(group));
                             }
                             #endregion
-                            
+
+                            #region SubCommands
                             var subCommands = interaction.GetMethods()
                                 .Where(x => x.GetCustomAttribute<SubCommandAttribute>() != null);
 
                             foreach (var subCommand in subCommands)
                             {
-                                var subCommandAttribute = subCommand.GetCustomAttribute<SubCommandAttribute>();
-                                
-                                applicationCommandModel.Options.Add(new()
-                                {
-                                    MethodInfo = subCommand,
-                                    Name = subCommandAttribute.Name,
-                                    Description = subCommandAttribute.Description,
-                                    Type = subCommandAttribute.Type
-                                });
+                                applicationCommandModel.Options.Add(await GetSlashCommandInfoFromMethod(subCommand));
                             }
+                            #endregion
                             
                             SlashCommands.Add(applicationCommandModel);
                             break;
                         #endregion
                         
                         default:
-                            Logger.LogInformation("InteractionType '{Type}' is not Supported", interactionType.GetInteractionType().ToString());
+                            Logger.LogInformation("InteractionType '{Type}' is not Supported", interactionType.Type.ToString());
                             continue;
                     }
                 }
@@ -163,11 +131,81 @@ public class InteractionHandlerService : IBaseBotModule
     public async Task OnSlashCommandExecuted(SocketSlashCommand command)
     {
         var commandExecutor = SlashCommands.FirstOrDefault(x => x.Name == command.CommandName);
-        var instance =
-            ServiceProvider.GetRequiredService(commandExecutor.InteractionClass) as InteractionContext<SocketSlashCommand>;
+        var interactionInstance = ServiceProvider.GetRequiredService(commandExecutor.InteractionClass) as InteractionContext<SocketSlashCommand>;
 
-        instance.Context = command;
+        interactionInstance.Context = command;
 
-        commandExecutor.MethodInfo.Invoke(instance, []);
+        commandExecutor.MethodInfo.Invoke(interactionInstance, []);
+    }
+
+    public async Task<SlashCommandInfo.OptionsData> GetSlashCommandGroupInfoFromMethod(Type type)
+    {
+        var optionAttribute = type.GetCustomAttribute<SubCommandGroupAttribute>();
+        var subCommandsInGroup = type.GetMethods()
+            .Where(x => x.GetCustomAttribute<SubCommandAttribute>() != null);
+
+        var subCommands = new List<SlashCommandInfo.OptionsData>();
+        foreach (var subCommand in subCommandsInGroup)
+        {
+            subCommands.Add(await GetSlashCommandInfoFromMethod(subCommand));
+        }
+        
+        return new()
+        {
+            GroupClass = type,
+            Type = optionAttribute.Type,
+            Name = optionAttribute.Name,
+            UseLocalizedNaming = optionAttribute.UseLocalizedNaming,
+            Description = optionAttribute.Description,
+            Options = subCommands
+        };
+    }
+
+    private async Task<SlashCommandInfo.OptionsData> GetSlashCommandInfoFromMethod(MethodInfo methodInfo)
+    {
+        var optionAttribute = methodInfo.GetCustomAttribute<SubCommandAttribute>();
+        var commandOptions = await GetOptionsFromMethod(methodInfo);
+        
+        return new SlashCommandInfo.OptionsData
+        {
+            MethodInfo = methodInfo,
+            Type = optionAttribute.Type,
+            Name = optionAttribute.Name,
+            UseLocalizedNaming = optionAttribute.UseLocalizedNaming,
+            Description = optionAttribute.Description,
+            Options = commandOptions
+        };
+    }
+
+    private async Task<List<SlashCommandInfo.OptionsData>> GetOptionsFromMethod(MethodInfo methodInfo)
+    {
+        var list = new List<SlashCommandInfo.OptionsData>();
+        var optionAttributes = methodInfo.GetCustomAttributes<SlashCommandOptionAttribute>();
+
+        foreach (var optionAttribute in optionAttributes)
+        {
+            list.Add(new SlashCommandInfo.OptionsData
+            {
+                MethodInfo = methodInfo,
+                Type = optionAttribute.Type,
+                Name = optionAttribute.Name,
+                UseLocalizedNaming = optionAttribute.UseLocalizedNaming,
+                Description = optionAttribute.Description,
+                IsAutocomplete = optionAttribute.IsAutocomplete,
+                IsDefault = optionAttribute.IsDefault,
+                IsRequired = optionAttribute.IsRequired,
+                MaxValue = optionAttribute.MaxValue,
+                MinValue = optionAttribute.MinValue,
+                MaxLength = optionAttribute.MaxLength,
+                MinLength = optionAttribute.MinLength,
+                ChannelTypes = optionAttribute.ChannelTypes
+                
+                //TODO:Implement Choices back from parameters
+                //public readonly List<ApplicationCommandOptionChoiceProperties> Choices;
+                //Choices = optionAttribute.Choices
+            });
+        }
+            
+        return list;
     }
 }
