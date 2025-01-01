@@ -2,7 +2,7 @@ using Discord;
 
 namespace Papageis.DiscordNet.Attributes.SlashCommand;
 
-[AttributeUsage(AttributeTargets.Method)]
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 public class SlashCommandOptionAttribute : Attribute
 {
     public readonly ApplicationCommandOptionType Type;
@@ -21,7 +21,7 @@ public class SlashCommandOptionAttribute : Attribute
     public SlashCommandOptionAttribute(
         ApplicationCommandOptionType type,
         string name, 
-        string? description,
+        string description,
         bool isRequired = false,
         bool isDefault = false,
         bool isAutocomplete = false,

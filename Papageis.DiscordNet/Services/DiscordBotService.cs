@@ -14,16 +14,20 @@ public class DiscordBotService
     private readonly DiscordSocketClient Client;
     private readonly IBaseBotModule[] Modules;
 
+    private readonly InteractionBuilderService InteractionBuilder;
+
     public DiscordBotService(
         ILogger<DiscordBotService> logger,
         DiscordBotConfiguration configuration,
         IBaseBotModule[] modules,
-        DiscordSocketClient client)
+        DiscordSocketClient client,
+        InteractionBuilderService interactionBuilder)
     {
         Logger = logger;
         Configuration = configuration;
         Modules = modules;
         Client = client;
+        InteractionBuilder = interactionBuilder;
     }
 
     public async Task StartAsync()
@@ -54,15 +58,8 @@ public class DiscordBotService
 
         Logger.LogInformation("Login as {username}#{id}", Client.CurrentUser.Username,
             Client.CurrentUser.DiscriminatorValue);
-        
-        /*
-        var builder = new SlashCommandBuilder()
-            .WithName("ping")
-            .WithDescription("Ping Command");
-        //Client.CreateGlobalApplicationCommandAsync(builder.Build());
-        Client.GetGuild(1076531815998828635).CreateApplicationCommandAsync(builder.Build());
-        */
-        
+
+        InteractionBuilder.RegisterAllGlobalApplicationSlashCommands();
     }
 
     public IBaseBotModule[] GetBaseBotModules()

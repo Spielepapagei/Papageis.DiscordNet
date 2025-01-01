@@ -1,4 +1,5 @@
 using Discord;
+using Discord.Commands;
 using Papageis.DiscordNet.Enums;
 
 namespace Papageis.DiscordNet.Attributes;
@@ -12,16 +13,18 @@ public class InteractionTypeAttribute : Attribute
     public readonly bool UseLocalizedNaming;
     public readonly bool Nsfw;
     public readonly GuildPermission GuildPermission;
-    public readonly ApplicationIntegrationType IntegrationTypes;
+    public HashSet<InteractionContextType>? ContextTypes;
+    public HashSet<ApplicationIntegrationType>? IntegrationTypes;
 
     public InteractionTypeAttribute(
         ValidInteractionType type,
         string name,
-        string description = null,
+        string description,
         bool useLocalizedNaming = false,
         bool nsfw = false,
         GuildPermission guildPermission = default,
-        ApplicationIntegrationType integrationTypes = default)
+        InteractionContextType[] contextTypes = null,
+        ApplicationIntegrationType[] integrationTypes = null)
     {
         Type = type;
         Name = name;
@@ -29,6 +32,21 @@ public class InteractionTypeAttribute : Attribute
         UseLocalizedNaming = useLocalizedNaming;
         Nsfw = nsfw;
         GuildPermission = guildPermission;
-        IntegrationTypes = integrationTypes;
+        ContextTypesToHashSet(contextTypes);
+        IntegrationTypesToHashSet(integrationTypes);
+    }
+    
+    private void ContextTypesToHashSet(InteractionContextType[]? contextTypes)
+    {
+        ContextTypes = contextTypes is not null 
+            ? new HashSet<InteractionContextType>(contextTypes) 
+            : null;
+    }
+    
+    private void IntegrationTypesToHashSet(ApplicationIntegrationType[]? integrationTypes)
+    {
+        IntegrationTypes = integrationTypes is not null 
+            ? new HashSet<ApplicationIntegrationType>(integrationTypes) 
+            : null;
     }
 }

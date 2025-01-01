@@ -48,11 +48,12 @@ serviceCollection.AddLogging(builder =>
 });
 
 serviceCollection.AddSingleton<MyCoolCommand>();
+serviceCollection.AddSingleton<MyCoolSlashCommand>();
 
 //Bot Testy
 var serviceProvider = serviceCollection.BuildServiceProvider();
 
-var service = serviceProvider.GetRequiredService<InteractionHandlerService>();
+var service = serviceProvider.GetRequiredService<InteractionInitializationService>();
 await service.InitializeInteractionHandler();
 
 serviceProvider.StartDiscordBot(true);

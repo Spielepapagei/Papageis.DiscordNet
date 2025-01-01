@@ -14,7 +14,7 @@ public class SubCommandGroupAttribute : Attribute
     public SubCommandGroupAttribute(
         Type groupOf,
         string name,
-        string description = null,
+        string description,
         bool useLocalizedNaming = false
     )
     {

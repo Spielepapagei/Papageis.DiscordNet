@@ -1,11 +1,7 @@
-using System.Reflection;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Papageis.DiscordNet.Attributes;
-using Papageis.DiscordNet.Attributes.SlashCommand;
-using Papageis.DiscordNet.Configuration;
-using Papageis.DiscordNet.Enums;
 using Papageis.DiscordNet.Interfaces;
 using Papageis.DiscordNet.Models;
 
@@ -13,23 +9,20 @@ namespace Papageis.DiscordNet.Services;
 
 public class InteractionHandlerService : IBaseBotModule
 {
-    #region Initializeation
     private readonly ILogger<InteractionHandlerService> Logger;
     private readonly DiscordSocketClient Client;
-    private readonly DiscordBotConfiguration Configuration;
     private readonly IServiceProvider ServiceProvider;
+    private readonly InteractionInitializationService InteractionService;
 
     public InteractionHandlerService(
         ILogger<InteractionHandlerService> logger,
         DiscordSocketClient client,
-        DiscordBotConfiguration configuration,
-        IServiceProvider serviceProvider
-    )
+        IServiceProvider serviceProvider, InteractionInitializationService initializationService)
     {
         Logger = logger;
         Client = client;
-        Configuration = configuration;
         ServiceProvider = serviceProvider;
+        InteractionService = initializationService;
     }
 
     public async Task InitializeAsync()
@@ -41,171 +34,107 @@ public class InteractionHandlerService : IBaseBotModule
     {
         Client.SlashCommandExecuted -= OnSlashCommandExecuted;
     }
-    #endregion
-    
-    public async Task InitializeInteractionHandler()
+
+    private async Task OnSlashCommandExecuted(SocketSlashCommand command)
     {
-        try
+        var commandExecutor = InteractionService.GetSlashCommands().FirstOrDefault(x => x.Name == command.CommandName);
+        if (commandExecutor == null)
         {
-            #region Gets all classes that Implement the InteractionContext
-            foreach (var interactions in
-                     Configuration.ModuleAssemblies.Select(assembly => assembly.ExportedTypes.Where(
-                         x => x.BaseType != null &&
-                              x.BaseType.IsGenericType &&
-                              x.BaseType.GetGenericTypeDefinition() == typeof(InteractionContext<>)
-                     )))
-            #endregion
-            {
-                foreach (var interaction in interactions)
-                {
-                    var interactionType = interaction.GetCustomAttribute(typeof(InteractionTypeAttribute), false) as InteractionTypeAttribute;
-                    if(interactionType == null) continue;
-                    
-                    switch (interactionType.Type)
-                    {
-                        #region InitSlashCommand
-                        case ValidInteractionType.SlashCommand:
-                            var applicationCommandModel = new SlashCommandInfo
-                            {
-                                Name = interactionType.Name,
-                                InteractionClass = interaction
-                            };
-                            
-                            //Check if it is a command without nesting.
-                            var entryPoint = interaction.GetMethods()
-                                .FirstOrDefault(x => x.GetCustomAttribute<SlashCommandAttribute>() != null);
-                            
-                            if (entryPoint != null)
-                            {
-                                applicationCommandModel.MethodInfo = entryPoint;
-                                applicationCommandModel.Options = await GetOptionsFromMethod(entryPoint);
-                                
-                                SlashCommands.Add(applicationCommandModel);
-                                break;
-                            }
-
-                            //Nesting logic
-                            #region SubCommandGroups
-                            var subCommandGroups = interaction.GetNestedTypes()
-                                    .Where(x => x.GetCustomAttribute<SubCommandGroupAttribute>() != null);
-
-                            foreach (var group in subCommandGroups)
-                            {
-                                applicationCommandModel.Options.Add(await GetSlashCommandGroupInfoFromMethod(group));
-                            }
-                            #endregion
-
-                            #region SubCommands
-                            var subCommands = interaction.GetMethods()
-                                .Where(x => x.GetCustomAttribute<SubCommandAttribute>() != null);
-
-                            foreach (var subCommand in subCommands)
-                            {
-                                applicationCommandModel.Options.Add(await GetSlashCommandInfoFromMethod(subCommand));
-                            }
-                            #endregion
-                            
-                            SlashCommands.Add(applicationCommandModel);
-                            break;
-                        #endregion
-                        
-                        default:
-                            Logger.LogInformation("InteractionType '{Type}' is not Supported", interactionType.Type.ToString());
-                            continue;
-                    }
-                }
-            }
-            
-            Logger.LogInformation("Done!");
-            
+            await ReturnNotFound(command);
+            return;
         }
-        catch (Exception e)
-        {
-            Logger.LogError("An error has occurred while initializing the Interactions: {Exception}", e);
-            throw;
-        }
-    }
 
-    private List<SlashCommandInfo> SlashCommands = new();
-
-    public async Task OnSlashCommandExecuted(SocketSlashCommand command)
-    {
-        var commandExecutor = SlashCommands.FirstOrDefault(x => x.Name == command.CommandName);
         var interactionInstance = ServiceProvider.GetRequiredService(commandExecutor.InteractionClass) as InteractionContext<SocketSlashCommand>;
-
-        interactionInstance.Context = command;
-
-        commandExecutor.MethodInfo.Invoke(interactionInstance, []);
-    }
-
-    public async Task<SlashCommandInfo.OptionsData> GetSlashCommandGroupInfoFromMethod(Type type)
-    {
-        var optionAttribute = type.GetCustomAttribute<SubCommandGroupAttribute>();
-        var subCommandsInGroup = type.GetMethods()
-            .Where(x => x.GetCustomAttribute<SubCommandAttribute>() != null);
-
-        var subCommands = new List<SlashCommandInfo.OptionsData>();
-        foreach (var subCommand in subCommandsInGroup)
+        if (interactionInstance != null && commandExecutor.MethodInfo != null)
         {
-            subCommands.Add(await GetSlashCommandInfoFromMethod(subCommand));
+            var commandModel = commandExecutor.Options;
+            var optionsData = command.Data.Options;
+
+            var parameters = await LoadOptions(command, commandModel, optionsData);
+
+            interactionInstance.Context = command;
+            commandExecutor.MethodInfo.Invoke(interactionInstance, parameters);
+            return;
         }
         
-        return new()
-        {
-            GroupClass = type,
-            Type = optionAttribute.Type,
-            Name = optionAttribute.Name,
-            UseLocalizedNaming = optionAttribute.UseLocalizedNaming,
-            Description = optionAttribute.Description,
-            Options = subCommands
-        };
+        await ReturnNotFound(command);
     }
 
-    private async Task<SlashCommandInfo.OptionsData> GetSlashCommandInfoFromMethod(MethodInfo methodInfo)
-    {
-        var optionAttribute = methodInfo.GetCustomAttribute<SubCommandAttribute>();
-        var commandOptions = await GetOptionsFromMethod(methodInfo);
-        
-        return new SlashCommandInfo.OptionsData
-        {
-            MethodInfo = methodInfo,
-            Type = optionAttribute.Type,
-            Name = optionAttribute.Name,
-            UseLocalizedNaming = optionAttribute.UseLocalizedNaming,
-            Description = optionAttribute.Description,
-            Options = commandOptions
-        };
-    }
 
-    private async Task<List<SlashCommandInfo.OptionsData>> GetOptionsFromMethod(MethodInfo methodInfo)
+    public async Task<object[]?> LoadOptions(SocketSlashCommand command,
+        List<SlashCommandInfo.OptionsData> commandModel,
+        IReadOnlyCollection<SocketSlashCommandDataOption>? optionsData)
     {
-        var list = new List<SlashCommandInfo.OptionsData>();
-        var optionAttributes = methodInfo.GetCustomAttributes<SlashCommandOptionAttribute>();
-
-        foreach (var optionAttribute in optionAttributes)
+        List<object?> parameters = [];
+        if (optionsData == null) return null;
+        foreach (var option in commandModel)
         {
-            list.Add(new SlashCommandInfo.OptionsData
+            var data = optionsData.FirstOrDefault(x => x.Name == option.Name);
+            if (data == null)
             {
-                MethodInfo = methodInfo,
-                Type = optionAttribute.Type,
-                Name = optionAttribute.Name,
-                UseLocalizedNaming = optionAttribute.UseLocalizedNaming,
-                Description = optionAttribute.Description,
-                IsAutocomplete = optionAttribute.IsAutocomplete,
-                IsDefault = optionAttribute.IsDefault,
-                IsRequired = optionAttribute.IsRequired,
-                MaxValue = optionAttribute.MaxValue,
-                MinValue = optionAttribute.MinValue,
-                MaxLength = optionAttribute.MaxLength,
-                MinLength = optionAttribute.MinLength,
-                ChannelTypes = optionAttribute.ChannelTypes
-                
-                //TODO:Implement Choices back from parameters
-                //public readonly List<ApplicationCommandOptionChoiceProperties> Choices;
-                //Choices = optionAttribute.Choices
-            });
+                await ReturnNotFound(command, "values are wrong or null.");
+                return null;
+            }
+
+            if (option.IsRequired ?? false)
+                if (data.Value == null)
+                {
+                    await ReturnNotFound(command, "value can not be null.");
+                    return null;
+                }
+
+            switch (option.Type)
+            {
+                case ApplicationCommandOptionType.String:
+                    var val0 = data.Value as string;
+                    parameters.Add(val0 ?? null);
+                    break;
+                case ApplicationCommandOptionType.Integer:
+                    var val1 = data.Value as int? ?? null;
+                    parameters.Add(val1 ?? null);
+                    break;
+                case ApplicationCommandOptionType.Boolean:
+                    var val2 = data.Value as bool? ?? null;
+                    parameters.Add(val2 ?? null);
+                    break;
+                case ApplicationCommandOptionType.User:
+                    var val3 = data.Value as IUser;
+                    parameters.Add(val3 ?? null);
+                    break;
+                case ApplicationCommandOptionType.Channel:
+                    var val4 = data.Value as IGuildChannel;
+                    parameters.Add(val4 ?? null);
+                    break;
+                case ApplicationCommandOptionType.Role:
+                    var val5 = data.Value as IRole;
+                    parameters.Add(val5 ?? null);
+                    break;
+                case ApplicationCommandOptionType.Mentionable:
+                    var val6 = data.Value as IMentionable;
+                    parameters.Add(val6 ?? null);
+                    break;
+                case ApplicationCommandOptionType.Number:
+                    var val7 = data.Value as double? ?? null;
+                    parameters.Add(val7 ?? null);
+                    break;
+                case ApplicationCommandOptionType.Attachment:
+                    var val8 = data.Value as IAttachment;
+                    parameters.Add(val8);
+                    break;
+
+                case ApplicationCommandOptionType.SubCommand:
+                case ApplicationCommandOptionType.SubCommandGroup:
+                default:
+                    await ReturnNotFound(command, "Type out of Index");
+                    return null;
+            }
         }
-            
-        return list;
+        return parameters.ToArray();
+    }
+
+    private async Task ReturnNotFound(SocketSlashCommand command, string reason = null)
+    {
+        command.RespondAsync("You found a Black hole", ephemeral: true);
+        Logger.LogWarning("SlashCommand with the name {CommandName} was unable to parse: {Reason}", command, reason);
     }
 }

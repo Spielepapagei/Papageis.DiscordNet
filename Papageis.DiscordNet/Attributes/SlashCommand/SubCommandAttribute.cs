@@ -12,7 +12,7 @@ public class SubCommandAttribute : Attribute
     
     public SubCommandAttribute(
         string name,
-        string description = null,
+        string description,
         bool useLocalizedNaming = false
     )
     {

@@ -8,7 +8,7 @@ using Papageis.DiscordNet.Services;
 
 namespace Papapageis.DiscordNet.Test.Modules;
 
-[InteractionType(ValidInteractionType.SlashCommand, "user")]
+[InteractionType(ValidInteractionType.SlashCommand, "user", "a command")]
 public class MyCoolCommand : InteractionContext<SocketSlashCommand>
 {
     private readonly ILogger<MyCoolCommand> Logger;
@@ -19,11 +19,11 @@ public class MyCoolCommand : InteractionContext<SocketSlashCommand>
     }
     
     
-    [SubCommandGroup(typeof(MyCoolCommand), "moderation")]
+    [SubCommandGroup(typeof(MyCoolCommand), "moderation", "moderation tools")]
     public class MyCoolGroup : InteractionContext<SocketSlashCommand>
     {
         
-        [SubCommand("ban")]
+        [SubCommand("ban", "ban a user")]
         [SlashCommandOption(ApplicationCommandOptionType.User, "user", "select the user to ban", true)]
         public async Task MyCoolSubCommand([FromOptions]IUser user)
         {
@@ -32,9 +32,9 @@ public class MyCoolCommand : InteractionContext<SocketSlashCommand>
         
     }
     
-    [SubCommand( "info")]
+    [SubCommand( "info", "get info about an user")]
     [SlashCommandOption(ApplicationCommandOptionType.User, "user", "select the user to ban", true)]
-    public async Task MySubCommand([FromOptions]IUser user)
+    public async Task MySubCommand(IUser user)
     {
         Context.RespondAsync($"Success from MySubCommand User: {user.Username}");
     }

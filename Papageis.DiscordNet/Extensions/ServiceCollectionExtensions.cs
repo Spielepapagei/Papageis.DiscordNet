@@ -32,12 +32,14 @@ public static class ServiceCollectionExtensions
         
         // Main service
         collection.AddSingleton<DiscordBotService>();
+        collection.AddSingleton<InteractionInitializationService>();
+        collection.AddSingleton<InteractionBuilderService>();
         collection.AddSingleton<InteractionHandlerService>();
 
         //
         collection.AddInterfaces(interfaceConfiguration =>
         {
-            interfaceConfiguration.AddAssemblies([typeof(InteractionHandlerService).Assembly]);
+            interfaceConfiguration.AddAssemblies([typeof(InteractionInitializationService).Assembly]);
             interfaceConfiguration.AddAssemblies(configuration.ModuleAssemblies);
             interfaceConfiguration.AddInterface<IBaseBotModule>();
         });
