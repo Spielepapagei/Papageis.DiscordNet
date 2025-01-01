@@ -48,6 +48,7 @@ serviceCollection.AddLogging(builder =>
 });
 
 serviceCollection.AddSingleton<MyCoolCommand>();
+serviceCollection.AddSingleton<MyCoolCommand.MyCoolGroup>();
 serviceCollection.AddSingleton<MyCoolSlashCommand>();
 
 //Bot Testy

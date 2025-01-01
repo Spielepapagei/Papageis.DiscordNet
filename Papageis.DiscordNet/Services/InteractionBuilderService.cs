@@ -89,7 +89,7 @@ public class InteractionBuilderService
         }
     }
 
-    private async Task<SlashCommandOptionBuilder> GenerateOptions(SlashCommandInfo.OptionsData option)
+    private async Task<SlashCommandOptionBuilder> GenerateOptions(OptionsData option)
     {
         try
         {

@@ -115,13 +115,13 @@ public class InteractionInitializationService
 
     private List<SlashCommandInfo> SlashCommands = new();
 
-    private async Task<SlashCommandInfo.OptionsData> GetSlashCommandGroupInfoFromMethod(Type type)
+    private async Task<OptionsData> GetSlashCommandGroupInfoFromMethod(Type type)
     {
         var optionAttribute = type.GetCustomAttribute<SubCommandGroupAttribute>();
         var subCommandsInGroup = type.GetMethods()
             .Where(x => x.GetCustomAttribute<SubCommandAttribute>() != null);
 
-        var subCommands = new List<SlashCommandInfo.OptionsData>();
+        var subCommands = new List<OptionsData>();
         foreach (var subCommand in subCommandsInGroup)
         {
             subCommands.Add(await GetSlashCommandInfoFromMethod(subCommand));
@@ -129,7 +129,7 @@ public class InteractionInitializationService
         
         return new()
         {
-            GroupClass = type,
+            InteractionClass = type,
             Type = optionAttribute.Type,
             Name = optionAttribute.Name,
             UseLocalizedNaming = optionAttribute.UseLocalizedNaming,
@@ -138,12 +138,12 @@ public class InteractionInitializationService
         };
     }
 
-    private async Task<SlashCommandInfo.OptionsData> GetSlashCommandInfoFromMethod(MethodInfo methodInfo)
+    private async Task<OptionsData> GetSlashCommandInfoFromMethod(MethodInfo methodInfo)
     {
         var optionAttribute = methodInfo.GetCustomAttribute<SubCommandAttribute>();
         var commandOptions = await GetOptionsFromMethod(methodInfo);
         
-        return new SlashCommandInfo.OptionsData
+        return new OptionsData
         {
             MethodInfo = methodInfo,
             Type = optionAttribute.Type,
@@ -154,14 +154,14 @@ public class InteractionInitializationService
         };
     }
 
-    private async Task<List<SlashCommandInfo.OptionsData>> GetOptionsFromMethod(MethodInfo methodInfo)
+    private async Task<List<OptionsData>> GetOptionsFromMethod(MethodInfo methodInfo)
     {
-        var list = new List<SlashCommandInfo.OptionsData>();
+        var list = new List<OptionsData>();
         var optionAttributes = methodInfo.GetCustomAttributes<SlashCommandOptionAttribute>();
 
         foreach (var optionAttribute in optionAttributes)
         {
-            list.Add(new SlashCommandInfo.OptionsData
+            list.Add(new OptionsData
             {
                 MethodInfo = methodInfo,
                 Type = optionAttribute.Type,

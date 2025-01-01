@@ -37,33 +37,82 @@ public class InteractionHandlerService : IBaseBotModule
 
     private async Task OnSlashCommandExecuted(SocketSlashCommand command)
     {
-        var commandExecutor = InteractionService.GetSlashCommands().FirstOrDefault(x => x.Name == command.CommandName);
-        if (commandExecutor == null)
+        try
         {
-            await ReturnNotFound(command);
-            return;
-        }
+            var commandExecutor =
+                InteractionService.GetSlashCommands().FirstOrDefault(x => x.Name == command.CommandName);
+            if (commandExecutor == null)
+            {
+                await ReturnNotFound(command, "commandExecutor is null");
+                return;
+            }
 
-        var interactionInstance = ServiceProvider.GetRequiredService(commandExecutor.InteractionClass) as InteractionContext<SocketSlashCommand>;
-        if (interactionInstance != null && commandExecutor.MethodInfo != null)
-        {
             var commandModel = commandExecutor.Options;
             var optionsData = command.Data.Options;
 
-            var parameters = await LoadOptions(command, commandModel, optionsData);
+            var interactionInstance = ServiceProvider.GetRequiredService(commandExecutor.InteractionClass) as InteractionContext<SocketSlashCommand>;
+            if (interactionInstance != null && commandExecutor.MethodInfo != null)
+            {
+                var parameters = await LoadOptions(command, commandModel, optionsData);
 
-            interactionInstance.Context = command;
-            commandExecutor.MethodInfo.Invoke(interactionInstance, parameters);
-            return;
+                interactionInstance.Context = command;
+                commandExecutor.MethodInfo.Invoke(interactionInstance, parameters);
+                return;
+            }
+
+            foreach (var subOption in optionsData)
+            {
+                var discordSubOptionData = subOption;
+                OptionsData? subCommand = new OptionsData();
+                object[]? parameters = [];
+
+                switch (subOption.Type)
+                {
+                    case ApplicationCommandOptionType.SubCommand:
+                        subCommand = commandExecutor.Options.FirstOrDefault(x => x.Name == subOption.Name);
+                        break;
+                    case ApplicationCommandOptionType.SubCommandGroup:
+                        var group = commandExecutor.Options.FirstOrDefault(x => x.Name == subOption.Name);
+                        interactionInstance = ServiceProvider.GetRequiredService(group.InteractionClass) as InteractionContext<SocketSlashCommand>;
+                        
+                        var subSubOption = group.Options.FirstOrDefault(x => x.Name == subOption.Options.First().Name);
+                        subCommand = group.Options.FirstOrDefault(x => x.Name == subSubOption.Name);
+                        discordSubOptionData = subOption.Options.First();
+                        break;
+                    case ApplicationCommandOptionType.String:
+                    case ApplicationCommandOptionType.Integer:
+                    case ApplicationCommandOptionType.Boolean:
+                    case ApplicationCommandOptionType.User:
+                    case ApplicationCommandOptionType.Channel:
+                    case ApplicationCommandOptionType.Role:
+                    case ApplicationCommandOptionType.Mentionable:
+                    case ApplicationCommandOptionType.Number:
+                    case ApplicationCommandOptionType.Attachment:
+                    default:
+                        await ReturnNotFound(command, "Type out of Index");
+                        return;
+                }
+
+                if (interactionInstance == null || subCommand == null || subCommand.MethodInfo == null) continue;
+                var x = subCommand.Options ?? [];
+                parameters = await LoadOptions(command, x, discordSubOptionData.Options);
+
+                interactionInstance.Context = command;
+                subCommand.MethodInfo.Invoke(interactionInstance, parameters);
+                return;
+            }
+
+            await ReturnNotFound(command);
         }
-        
-        await ReturnNotFound(command);
+        catch (Exception e)
+        {
+            await ReturnNotFound(command, e);
+            throw;
+        }
     }
 
 
-    public async Task<object[]?> LoadOptions(SocketSlashCommand command,
-        List<SlashCommandInfo.OptionsData> commandModel,
-        IReadOnlyCollection<SocketSlashCommandDataOption>? optionsData)
+    public async Task<object[]?> LoadOptions(SocketSlashCommand command, List<OptionsData> commandModel, IReadOnlyCollection<SocketSlashCommandDataOption>? optionsData)
     {
         List<object?> parameters = [];
         if (optionsData == null) return null;
@@ -132,9 +181,15 @@ public class InteractionHandlerService : IBaseBotModule
         return parameters.ToArray();
     }
 
-    private async Task ReturnNotFound(SocketSlashCommand command, string reason = null)
+    private async Task ReturnNotFound(SocketSlashCommand command, string? reason = null)
     {
         command.RespondAsync("You found a Black hole", ephemeral: true);
-        Logger.LogWarning("SlashCommand with the name {CommandName} was unable to parse: {Reason}", command, reason);
+        Logger.LogWarning("SlashCommand with the name {CommandName} was unable to parse: {Reason}", command.CommandName, reason ?? "");
+    }
+    
+    private async Task ReturnNotFound(SocketSlashCommand command, Exception? exception)
+    {
+        command.RespondAsync("You found a Black hole", ephemeral: true);
+        Logger.LogWarning("SlashCommand with the name {CommandName} was unable to parse: {Exception}", command.CommandName, exception);
     }
 }
