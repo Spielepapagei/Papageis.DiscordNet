@@ -80,7 +80,7 @@ public class DiscordBotService
         Logger.LogInformation("Login as {username}#{id}", Client.CurrentUser.Username,
             Client.CurrentUser.DiscriminatorValue);
         
-        RegisterGlobalCommandsAsync();
+        await RegisterGlobalCommandsAsync();
     }
 
     public IBaseBotModule[] GetBaseBotModules()
@@ -99,22 +99,25 @@ public class DiscordBotService
         {
             foreach (var command in SlashCommands)
             {
-                command.GetName();
+                await command.GetName();
                 await RegisterSlashCommandAsync(command);
+                Logger.LogInformation("Registered Slash command {CommandName}", command);
                 await Task.Delay(TimeSpan.FromMilliseconds(100));
             }
             
             foreach (var command in MessageCommands)
             {
-                command.GetName();
+                await command.GetName();
                 await RegisterMessageCommandAsync(command);
+                Logger.LogInformation("Registered Message command {CommandName}", command);
                 await Task.Delay(TimeSpan.FromMilliseconds(100));
             }
             
             foreach (var command in UserCommands)
             {
-                command.GetName();
+                await command.GetName();
                 await RegisterUserCommandAsync(command);
+                Logger.LogInformation("Registered User command {CommandName}", command);
                 await Task.Delay(TimeSpan.FromMilliseconds(100));
             }
         }
@@ -151,7 +154,7 @@ public class DiscordBotService
         var guildId = await command.GuildId();
 
         var guild = Client.GetGuild(guildId);
-        guild.CreateApplicationCommandAsync(builder.Build());
+        await guild.CreateApplicationCommandAsync(builder.Build());
     }
 
     private Task Log(LogMessage message)

@@ -40,7 +40,7 @@ serviceCollection.AddDiscordBot(configuration =>
 },
 config =>
 {
-    config.GatewayIntents = GatewayIntents.All;
+    config.GatewayIntents = GatewayIntents.None;
 });
 
 serviceCollection.AddLogging(builder =>
@@ -52,6 +52,4 @@ serviceCollection.AddLogging(builder =>
 serviceCollection.AddSingleton<MyCoolCommand>();
 var serviceProvider = serviceCollection.BuildServiceProvider();
 
-serviceProvider.StartDiscordBot(true);
-
-await Task.Delay(-1);
+await serviceProvider.StartDiscordBot();
