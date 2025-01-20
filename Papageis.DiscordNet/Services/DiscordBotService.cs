@@ -129,32 +129,45 @@ public class DiscordBotService
     
     public async Task RegisterSlashCommandAsync(IBaseSlashCommand command)
     {
-        var builder = await command.RegisterAsync();
+        var builders = await command.RegisterAsync();
 
-        await Client.CreateGlobalApplicationCommandAsync(builder.Build());
+        foreach (var builder in builders)
+        {
+            await Client.CreateGlobalApplicationCommandAsync(builder.Build());
+        }
     }
     
     public async Task RegisterMessageCommandAsync(IBaseMessageCommand command)
     {
-        var builder = await command.RegisterAsync();
+        var builders = await command.RegisterAsync();
 
-        await Client.CreateGlobalApplicationCommandAsync(builder.Build());
+        foreach (var builder in builders)
+        {
+            await Client.CreateGlobalApplicationCommandAsync(builder.Build());
+        }
     }
     
     public async Task RegisterUserCommandAsync(IBaseUserCommand command)
     {
-        var builder = await command.RegisterAsync();
+        var builders = await command.RegisterAsync();
 
-        await Client.CreateGlobalApplicationCommandAsync(builder.Build());
+        foreach (var builder in builders)
+        {
+            await Client.CreateGlobalApplicationCommandAsync(builder.Build());
+        }
     }
     
     public async Task RegisterSlashCommandAsync(IGuildSlashCommand command)
     {
-        var builder = await command.RegisterAsync();
+        var builders = await command.RegisterAsync();
         var guildId = await command.GuildId();
 
         var guild = Client.GetGuild(guildId);
-        await guild.CreateApplicationCommandAsync(builder.Build());
+        foreach (var builder in builders)
+        {
+            await guild.CreateApplicationCommandAsync(builder.Build());
+        }
+        
     }
 
     private Task Log(LogMessage message)

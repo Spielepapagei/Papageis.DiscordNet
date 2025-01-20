@@ -7,7 +7,7 @@ public interface IBaseMessageCommand
 {
     public async Task GetName()
     {
-        Name = RegisterAsync().Result.Name;
+        Name = RegisterAsync().Result.First().Name;
     }
     
     /// <summary>
@@ -18,7 +18,7 @@ public interface IBaseMessageCommand
     /// <summary>
     /// This is an async implementation to Registering MessageCommands
     /// </summary>
-    public Task<MessageCommandBuilder> RegisterAsync();
+    public Task<List<MessageCommandBuilder>> RegisterAsync();
     
     /// <summary>
     /// Here you Implement the logic for this MessageCommand
