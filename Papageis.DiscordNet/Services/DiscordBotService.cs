@@ -79,8 +79,6 @@ public class DiscordBotService
 
         Logger.LogInformation("Login as {username}#{id}", Client.CurrentUser.Username,
             Client.CurrentUser.DiscriminatorValue);
-        
-        await RegisterGlobalCommandsAsync();
     }
 
     public IBaseBotModule[] GetBaseBotModules()
