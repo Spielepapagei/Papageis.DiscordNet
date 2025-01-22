@@ -7,18 +7,18 @@ public interface IBaseSlashCommand
 {
     public async Task GetName()
     {
-        Name = RegisterAsync().Result.First().Name;
+        Name = RegisterAsync().Result.Name;
     }
     
     /// <summary>
     /// Gives you back the name of the Command
     /// </summary>
-    public string? Name { get; set; }
+    public string Name { get; set; }
     
     /// <summary>
     /// This is an async implementation to Registering SlashCommands
     /// </summary>
-    public Task<List<SlashCommandBuilder>> RegisterAsync();
+    public Task<SlashCommandBuilder> RegisterAsync();
     
     /// <summary>
     /// Here you Implement the logic for this SlashCommand

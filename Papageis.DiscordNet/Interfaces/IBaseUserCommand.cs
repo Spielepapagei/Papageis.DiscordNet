@@ -7,7 +7,7 @@ public interface IBaseUserCommand
 {
     public async Task GetName()
     {
-        Name = RegisterAsync().Result.First().Name;
+        Name = RegisterAsync().Result.Name;
     }
     
     /// <summary>
@@ -18,7 +18,7 @@ public interface IBaseUserCommand
     /// <summary>
     /// This is an async implementation to Registering UserCommands
     /// </summary>
-    public Task<List<UserCommandBuilder>> RegisterAsync();
+    public Task<UserCommandBuilder> RegisterAsync();
     
     /// <summary>
     /// Here you Implement the logic for this UserCommand

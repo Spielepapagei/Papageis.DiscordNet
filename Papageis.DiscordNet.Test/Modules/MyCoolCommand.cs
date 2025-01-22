@@ -9,14 +9,12 @@ public class MyCoolCommand : IBaseSlashCommand
 {
     public string Name { get; set; }
 
-    public async Task<List<SlashCommandBuilder>> RegisterAsync()
+    public async Task<SlashCommandBuilder> RegisterAsync()
     {
-        return [new SlashCommandBuilder()
+        return new SlashCommandBuilder()
             .WithName("testy")
             .WithDescription("This is a TestCommand")
-            .AddOption("ping",
-                ApplicationCommandOptionType.String,
-                "type something here", false)];
+            .AddOption("ping", ApplicationCommandOptionType.String, "type something here", false);
     }
 
     [IsBot(true)]

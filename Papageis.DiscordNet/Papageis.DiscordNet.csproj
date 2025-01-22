@@ -8,9 +8,9 @@
         <Title>DiscordNet</Title>
         <Authors>Spielepapagei</Authors>
         <Copyright>Spielepapagei</Copyright>
-        <AssemblyVersion>1.1.6</AssemblyVersion>
-        <FileVersion>1.1.6</FileVersion>
-        <Version>1.1.6</Version>
+        <AssemblyVersion>1.1.5</AssemblyVersion>
+        <FileVersion>1.1.5</FileVersion>
+        <Version>1.1.5</Version>
         <Description>Papageis DiscordNet Wrapper to make it easier to create DiscordBots. It dosen't support Sharding! </Description>
         <PackageLicenseUrl>https://github.com/Spielepapagei/Papageis.DiscordNet/blob/stable/LICENSE</PackageLicenseUrl>
     </PropertyGroup>
