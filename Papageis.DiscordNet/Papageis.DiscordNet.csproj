@@ -8,17 +8,16 @@
         <Title>DiscordNet</Title>
         <Authors>Spielepapagei</Authors>
         <Copyright>Spielepapagei</Copyright>
-        <AssemblyVersion>1.1.7</AssemblyVersion>
-        <FileVersion>1.1.7</FileVersion>
-        <Version>1.1.7</Version>
+        <AssemblyVersion>1.1.8</AssemblyVersion>
+        <FileVersion>1.1.8</FileVersion>
+        <Version>1.1.8</Version>
         <Description>Papageis DiscordNet Wrapper to make it easier to create DiscordBots. It dosen't support Sharding! </Description>
         <PackageLicenseUrl>https://github.com/Spielepapagei/Papageis.DiscordNet/blob/stable/LICENSE</PackageLicenseUrl>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Discord.Net" Version="3.17.0" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
-      <PackageReference Include="MoonCore" Version="1.8.1" />
+      <PackageReference Include="Discord.Net" Version="3.17.1" />
+      <PackageReference Include="MoonCore" Version="1.8.4" />
       <PackageReference Include="MoonCore.PluginFramework" Version="1.0.5" />
     </ItemGroup>
 
